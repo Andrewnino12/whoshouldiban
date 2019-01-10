@@ -52,6 +52,12 @@ class dbSummoner
     public $summoner_id = '';
 }
 
+class httpResponse
+{
+    public $httpCode = 404;
+    public $body = '';
+}
+
 function mapIds($object)
 {
     return $object->match_id;
@@ -60,28 +66,8 @@ function mapIds($object)
 function getChampionWinsAndLossesForTier($tier)
 {
     $dbMatches = dbGetTierMatches($tier);
-    // var_dump($dbMatches);
-    // echo '<br>';
-    // echo '<br>';
-
     $matchIds = array_keys($dbMatches);
-
-    // var_dump($matchIds);
-    // echo '<br>';
-    // echo '<br>';
     $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($matchIds);
-
-    // var_dump($dbSummonerMatches);
-
-    // echo '<br>';
-    // echo '<br>';
-
-    // echo 'summonermatches: ';
-    // var_dump($dbSummonerMatches);
-    // $championStatistics = array(
-    //     'matches' => array(),
-    //     'champions' => dbGetChampions(),
-    // );
 
     $championStatistics = new ChampionStatistics();
     $championStatistics->matches = $matchIds;
@@ -90,43 +76,16 @@ function getChampionWinsAndLossesForTier($tier)
     $count = 0;
     foreach ($dbSummonerMatches as &$dbSummonerMatch) {
         $dbMatch = $dbMatches[$dbSummonerMatch->match_id];
-        // echo '<br>dbSummonerMatch: ';
-        // var_dump($dbSummonerMatch);
-        // echo '<br>match_id: ' . $dbSummonerMatch->match_id;
-        // echo '<br>';
-
-        // echo '<br>match: ';
-        // var_dump($dbMatch);
-        // echo '<br>match_id:' . $dbMatch->match_id;
-        // echo '<br>';
-
-        // if ($championStatistics->matches[$dbMatch['match_id']]) {
-        //     array_push($championStatistics->matches, $dbMatch['match_id']);
-        // }
-
-        // if (championStatistics.matches.indexOf(dbMatch.match_id) < 0) championStatistics.matches.push(dbMatch.match_id)
 
         if (($dbSummonerMatch->team_a && $dbMatch->team_a_won) || (!$dbSummonerMatch->team_a && !$dbMatch->team_a_won)) {
-            // if ((dbSummonerMatch.team_a && dbMatch.team_a_won) || (!dbSummonerMatch.team_a && !dbMatch.team_a_won)) {
-            //   // console.log("champ pick: " + dbSummonerMatch.champ_pick)
-
             $championStatistics->champions[$dbSummonerMatch->champ_pick]->wins++;
-            //   championStatistics.champions.find(champion => champion.id === dbSummonerMatch.champ_pick).wins++
         } else {
-            //   // console.log(dbSummonerMatch.champ_pick)
             $championStatistics->champions[$dbSummonerMatch->champ_pick]->losses++;
-            //   championStatistics.champions.find(champion => champion.id === dbSummonerMatch.champ_pick).losses++
-
         }
 
         if ($dbSummonerMatch->champ_ban > 0) {
-            // if (dbSummonerMatch.champ_ban > 0) {
-            // echo "BANNED CHAMP: " . strlen($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned[$dbMatch->match_id]);
-            // var_dump($championStatistics->champions[$dbSummonerMatch->champ_ban]);
             if (strlen($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned[$dbMatch->match_id]) <= 0) {
-                //   if (championStatistics.champions.find(champion => champion.id === dbSummonerMatch.champ_ban).matchesBanned.indexOf(dbMatch.match_id) < 0) {
                 array_push($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned, $dbMatch->match_id);
-                //     championStatistics.champions.find(champion => champion.id === dbSummonerMatch.champ_ban).matchesBanned.push(dbMatch.match_id)
             }
         }
     }
@@ -136,78 +95,46 @@ function getChampionWinsAndLossesForTier($tier)
 
 function frontPageCards()
 {
-    $tiers = ["IRON", "BRONZE", "SILVER", "GOLD"];
+    $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "GRANDMASTER", "CHALLENGER"];
 
     foreach ($tiers as &$tier) {
         echo '<div class="col-md-6" style="text-align: center;"><p class="help-block">' . $tier . '</p>';
         $winsAndLosses = getChampionWinsAndLossesForTier($tier);
-        getMostInfluentialChampion2($winsAndLosses);
+        getMostInfluentialChampions($winsAndLosses);
         echo "</div>";
     }
 }
 
-function getMostInfluentialChampion($championWinsAndLosses)
-{
-    $highestInfluenceRate = 0;
-    $highestInfluenceChampion = new ChampionStatistics();
-
-    foreach ($championWinsAndLosses->champions as &$champion) {
-        $winRate = $champion->wins / ($champion->wins + $champion->losses);
-        $lossRate = $champion->losses / ($champion->wins + $champion->losses);
-        $pickRateWhenAvailable = ($champion->wins + $champion->losses) / (sizeof($championWinsAndLosses->matches) - sizeof($champion->matchesBanned));
-        $banRate = sizeof($champion->matchesBanned) / sizeof($championWinsAndLosses->matches);
-
-        $chanceOfLosingTo = $pickRateWhenAvailable * $winRate;
-        $chanceOfWinningAgainst = $pickRateWhenAvailable * $lossRate;
-        // echo "$champion->name: chanceOfLosingTo = ${chanceOfLosingTo * 100}%, chanceOfWinningAgainst = ${chanceOfWinningAgainst * 100}% `)
-        // echo "pickRateWhenAvailable: ${pickRateWhenAvailable * 100}%, winRate: ${winRate * 100}%, lossRate: ${lossRate * 100}% `)
-        if ($chanceOfLosingTo > $highestInfluenceRate) {
-            $highestInfluenceRate = $chanceOfLosingTo;
-            $highestInfluenceChampion = $champion;
-        }
-    }
-    echo "Out of " . sizeof($championWinsAndLosses->matches) . " matches<br>";
-    echo "$highestInfluenceChampion->name had an influence rate of $highestInfluenceRate%<br>";
-    echo "With $highestInfluenceChampion->wins wins, $highestInfluenceChampion->losses losses, and " . sizeof($highestInfluenceChampion->matchesBanned) . " matches banned";
-}
-
-function getMostInfluentialChampion2($championWinsAndLosses, $numberToReturn = 5)
+function getMostInfluentialChampions($championWinsAndLosses, $numberToReturn = 5)
 {
     $highestInfluenceRate = 0;
     $highestInfluenceChampion = new ChampionStatistics();
     $championInfluences = array();
 
     foreach ($championWinsAndLosses->champions as &$champion) {
-        $winRate = $champion->wins / ($champion->wins + $champion->losses);
-        $lossRate = $champion->losses / ($champion->wins + $champion->losses);
-        $pickRateWhenAvailable = ($champion->wins + $champion->losses) / (sizeof($championWinsAndLosses->matches) - sizeof($champion->matchesBanned));
-        $banRate = sizeof($champion->matchesBanned) / sizeof($championWinsAndLosses->matches);
+        if ($champion->wins + $champion->losses > 0) {
+            $winRate = $champion->wins / ($champion->wins + $champion->losses);
+            $lossRate = $champion->losses / ($champion->wins + $champion->losses);
+            $pickRateWhenAvailable = ($champion->wins + $champion->losses) / (sizeof($championWinsAndLosses->matches) - sizeof($champion->matchesBanned));
+            $banRate = sizeof($champion->matchesBanned) / sizeof($championWinsAndLosses->matches);
 
-        $chanceOfLosingTo = $pickRateWhenAvailable * $winRate;
-        $chanceOfWinningAgainst = $pickRateWhenAvailable * $lossRate;
-        // echo "$champion->name: chanceOfLosingTo = ${chanceOfLosingTo * 100}%, chanceOfWinningAgainst = ${chanceOfWinningAgainst * 100}% `)
-        // echo "pickRateWhenAvailable: ${pickRateWhenAvailable * 100}%, winRate: ${winRate * 100}%, lossRate: ${lossRate * 100}% `)
-        if ($chanceOfLosingTo > $highestInfluenceRate) {
-            // $highestInfluenceRate = $chanceOfLosingTo;
-            // $highestInfluenceChampion = $champion;
-            $championInfluences["$champion->id"] = $chanceOfLosingTo;
+            $chanceOfLosingTo = $pickRateWhenAvailable * $winRate;
+            $chanceOfWinningAgainst = $pickRateWhenAvailable * $lossRate;
+            if ($chanceOfLosingTo > $highestInfluenceRate) {
+                $championInfluences["$champion->id"] = $chanceOfLosingTo;
+            }
         }
     }
-    // var_dump($championInfluences);
     $count = 0;
     echo "Out of " . sizeof($championWinsAndLosses->matches) . " matches<br>";
     arsort($championInfluences);
     foreach ($championInfluences as $key => $value) {
-        if($count >= $numberToReturn) {
+        if ($count >= $numberToReturn) {
             break;
         }
         $count++;
-        // echo "KEY IS: $key";
-        // echo "<br>";
-        // echo "VALUE IS: $value";
-        // echo "<br>";
         $champion = $championWinsAndLosses->champions[$key];
-        $value = $value * 100;
+        $value = round($value * 100, 2);
         echo "$champion->name had an influence rate of $value%<br>";
         echo "With $champion->wins wins, $champion->losses losses, and " . sizeof($champion->matchesBanned) . " matches banned<br>";
     }
@@ -239,9 +166,9 @@ function dbGetTierMatches($tier)
 {
     global $conn;
     $matches_request = mysqli_query($conn, "SELECT * FROM matches where (tier, game_version) in
-    ( select tier, max(game_version)
+    ( select tier, game_version
     from innodb.matches
-    where tier = '$tier'
+    where tier = '$tier' && game_version in (select max(game_version) from innodb.matches)
     )");
     $matches = array();
     while ($row = mysqli_fetch_assoc($matches_request)) {
@@ -265,13 +192,11 @@ function dbGetTierMatches($tier)
 function dbGetSummonerMatchesFromMatchIds($matchIds)
 {
     $joinedIds = implode(',', $matchIds);
-    // var_dump($joinedIds);
     global $conn;
     $summoner_matches_request = mysqli_query($conn, "SELECT * FROM summoner_matches where match_id in ($joinedIds)");
     $summoner_matches = array();
     while ($row = mysqli_fetch_assoc($summoner_matches_request)) {
         $summoner_match = new dbSummonerMatch();
-        // $summoner_match = json_encode($row);
         $summoner_match->id = $row['id'];
         $summoner_match->summoner_id = $row['summoner_id'];
         $summoner_match->champ_pick = $row['champ_pick'];
@@ -304,14 +229,10 @@ function dbGetChampions($championId = -1)
     return $champions;
 }
 
-function dbGetSummoners($accountId = '', $limit = 5)
+function dbGetSummoners($accountId = '', $limit = 1)
 {
     global $conn;
-    $queryString = strlen($accountId) > 0 ? "SELECT * FROM summoners WHERE account_id = '$accountId'" : "SELECT * FROM summoners ORDER BY id desc limit $limit";
-
-    // echo"<br>";
-    // echo"<br>";
-    // echo $queryString;
+    $queryString = strlen($accountId) > 0 ? "SELECT * FROM summoners WHERE account_id = '$accountId'" : "SELECT * FROM summoners ORDER BY rand() desc limit $limit";
 
     $summoners_request = mysqli_query($conn, $queryString);
     $summoners = array();
@@ -329,24 +250,21 @@ function dbGetSummoners($accountId = '', $limit = 5)
 
     if (sizeof($summoners) < 1) {
         $summonerRequest = makeRequest(summonerByAccountIdUrl($accountId));
-        $summoner = json_decode($summonerRequest);
+        $summoner = $summonerRequest->body;
+
         $summoners = dbStoreSummoner($summoner);
     }
     return $summoners;
 }
 
-function dbStoreSummoner($summoner)
+function dbGetSummonerByName($name)
 {
     global $conn;
-    $queryString = "SELECT * FROM summoners WHERE account_id = '$summoner->accountId'";
 
-    // echo $queryString;
-
-    $dbSummoners_request = mysqli_query($conn, $queryString);
-    $dbSummoners = array();
-    while ($row = mysqli_fetch_assoc($dbSummoners_request)) {
-        // echo 'dbStoreSummoner';
-        $dbSummoner = new dbSummoner();
+    $summoners_request = mysqli_query($conn, "SELECT * FROM summoners WHERE name = '$name'");
+    $dbSummoner = new dbSummoner();
+    $dbSummoner->id = -1;
+    while ($row = mysqli_fetch_assoc($summoners_request)) {
         $dbSummoner->id = $row['id'];
         $dbSummoner->account_id = $row['account_id'];
         $dbSummoner->name = $row['name'];
@@ -354,23 +272,36 @@ function dbStoreSummoner($summoner)
         $dbSummoner->revision_date = $row['revision_date'];
         $dbSummoner->summoner_level = $row['summoner_level'];
         $dbSummoner->summoner_id = $row['summoner_id'];
-        $dbSummoners[$row['id']] = $dbSummoner;
     }
 
-    if (sizeof($summoners) < 1) {
+    return $dbSummoner;
+}
+
+function dbStoreSummoner($summoner)
+{
+    global $conn;
+    $queryString = "SELECT * FROM summoners WHERE account_id = '$summoner->accountId'";
+
+    $dbSummoners_request = mysqli_query($conn, $queryString);
+    $dbSummoner = new dbSummoner();
+    $dbSummoner->id = -1;
+    while ($row = mysqli_fetch_assoc($dbSummoners_request)) {
+        $dbSummoner->id = $row['id'];
+        $dbSummoner->account_id = $row['account_id'];
+        $dbSummoner->name = $row['name'];
+        $dbSummoner->profile_icon_id = $row['profile_icon_id'];
+        $dbSummoner->revision_date = $row['revision_date'];
+        $dbSummoner->summoner_level = $row['summoner_level'];
+        $dbSummoner->summoner_id = $row['summoner_id'];
+    }
+
+    if ($dbSummoner->id < 0) {
         $queryString = "INSERT INTO summoners (name, account_id, summoner_level, revision_date, summoner_id, profile_icon_id) VALUES" . getSummonerValuesString($summoner);
-        // echo "insert $queryString";
-        // echo "<br>";
         $dbSummoners_request = mysqli_query($conn, $queryString);
         $queryString = "SELECT * FROM summoners WHERE account_id = '$summoner->accountId'";
-        // echo "select $queryString";
-        // echo "<br>";
 
         $dbSummoners_request = mysqli_query($conn, $queryString);
-        $dbSummoners = array();
         while ($row = mysqli_fetch_assoc($dbSummoners_request)) {
-            // echo 'dbStoreSummoner';
-            $dbSummoner = new dbSummoner();
             $dbSummoner->id = $row['id'];
             $dbSummoner->account_id = $row['account_id'];
             $dbSummoner->name = $row['name'];
@@ -378,10 +309,9 @@ function dbStoreSummoner($summoner)
             $dbSummoner->revision_date = $row['revision_date'];
             $dbSummoner->summoner_level = $row['summoner_level'];
             $dbSummoner->summoner_id = $row['summoner_id'];
-            $dbSummoners[$row['id']] = $dbSummoner;
         }
     }
-    return $dbSummoners;
+    return $dbSummoner;
 }
 
 function summonerHistoryByAccountIdUrl($accountId)
@@ -401,19 +331,81 @@ function matchByMatchIdUrl($matchId)
     return "https://na1.api.riotgames.com/lol/match/v4/matches/$matchId";
 }
 
+function get_headers_from_curl_response($response)
+{
+    $headers = array();
+
+    $header_text = substr($response, 0, strpos($response, "\r\n\r\n"));
+
+    foreach (explode("\r\n", $header_text) as $i => $line) {
+        if ($i === 0) {
+            $headers['http_code'] = $line;
+        } else {
+            list($key, $value) = explode(': ', $line);
+
+            $headers[$key] = $value;
+        }
+    }
+
+    return $headers;
+}
+
 function makeRequest($requestUrl)
 {
     global $api_key;
-    // echo '<br>';
-    // echo $requestUrl . "?api_key=$api_key";
-    // echo '<br>';
-    return file_get_contents($requestUrl . "?api_key=$api_key");
+    $encodedUrl = $requestUrl . "?api_key=$api_key";
+
+    $ch = curl_init();
+
+    // set url
+    curl_setopt($ch, CURLOPT_URL, $encodedUrl);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $retryCount = 0;
+    $httpCode = 404;
+
+    while ($httpCode > 400 && $retryCount < 1) {
+        $retryCount++;
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            error_log("Error: " . curl_error($ch));
+            echo "Error: " . curl_error($ch);
+        } else {
+            if ($response) {
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $headers = get_headers_from_curl_response($response);
+                $body = substr($response, strpos($response, "{"));
+                if (strpos($requestUrl, "positions") !== false) {
+                    $body = substr($response, strpos($response, "["));
+                }
+                $decodedJSON = json_decode($body);
+
+                if ($httpCode === 429) {
+                    error_log("Retrying after " . $headers['Retry-After'] . " seconds");
+                    echo "Retrying after " . $headers['Retry-After'] . " seconds";
+                    // sleep(intval($headers['Retry-After']));
+                }
+            } else {
+                error_log("NO DATA FROM RESPONSE: " . $encodedUrl, 0);
+                echo "NO DATA FROM RESPONSE: " . $encodedUrl, 0;
+            }
+        }
+
+    }
+
+    $httpResponse = new httpResponse();
+    $httpResponse->httpCode = $httpCode;
+    $httpResponse->body = $decodedJSON;
+
+    return $httpResponse;
 
 }
 
 function rankedGames($match)
 {
-    return $match->queue === 420 || $match->queue === 440 > $match;
+    return $match->queue === 420 || $match->queue === 440;
 }
 
 function getRankedGameIdsBySummonerHistory($summonerHistory)
@@ -441,11 +433,10 @@ function getMatchTier($match)
     $summonerIds = getSummonerIdsFromMatch($match);
     $tiers = array();
     foreach ($summonerIds as &$summonerId) {
-        $positionsRequest = makeRequest(leaguePositionsBySummonerIdUrl($summonerId));
+        $positionsResponse = makeRequest(leaguePositionsBySummonerIdUrl($summonerId));
+        $positions = $positionsResponse->body;
         $tier = 'UNRANKED';
 
-        $positions = json_decode($positionsRequest);
-        // var_dump($positions);
         foreach ($positions as &$position) {
             if (strpos($position->queueType, 'RANKED_FLEX') !== false && $match->queueId === 440
                 || strpos($position->queueType, 'RANKED_SOLO') !== false && $match->queueId === 420) {
@@ -473,7 +464,6 @@ function getInsertMatchValuesString($match)
     $win = strpos($match->teams[0]->win, 'Win') !== 0 ? "True" : "False";
     $solo_queue = $match->queueId === 420 ? "True" : "False";
     $matchTier = getMatchTier($match);
-    // return "match_id = $match->gameId, season_id = $match->seasonId, platform_id = '$match->platformId', game_version = '$match->gameVersion', game_creation = $match->gameCreation, game_duration = $match->gameDuration, team_a_won = '$win', solo_queue = '$solo_queue', tier = '$matchTier'";
     return "($match->gameId, $match->seasonId, '$match->platformId', '$match->gameVersion', $match->gameCreation, $match->gameDuration, '$win', '$solo_queue', '$matchTier')";
 }
 
@@ -483,7 +473,6 @@ function getUpdateMatchValuesString($match)
     $solo_queue = $match->queueId === 420 ? "True" : "False";
     $matchTier = getMatchTier($match);
     return "match_id = $match->gameId, season_id = $match->seasonId, platform_id = '$match->platformId', game_version = '$match->gameVersion', game_creation = $match->gameCreation, game_duration = $match->gameDuration, team_a_won = '$win', solo_queue = '$solo_queue', tier = '$matchTier'";
-    // return "($match->gameId, $match->seasonId, '$match->platformId', '$match->gameVersion', $match->gameCreation, $match->gameDuration, '$win', '$solo_queue', '$matchTier')";
 }
 
 function getSummonerValuesString($summoner)
@@ -505,7 +494,6 @@ function dbStoreMatch($match)
 
     if ($match_id > 0) {
         $matchValuesString = getUpdateMatchValuesString($match);
-        // $text = "UPDATE matches set (match_id, season_id, platform_id, game_version, game_creation, game_duration, team_a_won, solo_queue, tier) = $matchValuesString where match_id = $match_id";
         $text = "UPDATE matches set $matchValuesString where match_id = $match_id";
     }
 
@@ -522,7 +510,6 @@ function dbStoreMatch($match)
         $match_id = $row['id'];
     }
     echo '<br>';
-    // echo "matchId is " . $match_id;
 
     return $match_id;
 }
@@ -530,27 +517,32 @@ function dbStoreMatch($match)
 function dbStoreSummonerMatch($match)
 {
     global $conn;
-    $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($match->gameId);
+    $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds(array($match->gameId));
 
     if (sizeof($dbSummonerMatches) < 1) {
         $teamId = 0;
-
         foreach ($match->participantIdentities as &$participantIdentity) {
             $participantId = $participantIdentity->participantId - 1;
             if ($participantId > 4) {
                 $teamId = 1;
             }
 
-            $summonerRequest = makeRequest(summonerByNameUrl($participantIdentity->player->summonerName));
-            $summoner = json_decode($summonerRequest);
-            // echo '<br>Summoner: ';
-            // var_dump($summoner);
+            $summonerName = $participantIdentity->player->summonerName;
 
-            $dbSummoner = dbGetSummoners($summoner->accountId);
-            // echo '<br>dbSummoner: ';
-            // var_dump($dbSummoner);
+            $dbSummoner = dbGetSummonerByName($summonerName);
 
-            if (sizeof($dbSummoner) > 0) {
+            if ($dbSummoner->id < 0) {
+                $summonerRequest = makeRequest(summonerByNameUrl($summonerName));
+
+                if ($summonerRequest->httpCode > 400) {
+                    break;
+                }
+
+                $summoner = $summonerRequest->body;
+                $dbSummoner = dbStoreSummoner($summoner);
+            }
+
+            if ($dbSummoner->id > 0) {
                 $participant = $match->participants[$participantId];
                 $lane = $participant->timeline->lane;
                 switch ($lane) {
@@ -575,60 +567,38 @@ function dbStoreSummonerMatch($match)
                     default:
                 }
 
-                // echo '<br>dbSummoner: ';
-                // var_dump($dbSummoner);
-                // echo '<br>';
-
-                // echo '<br>dbSummoner ID: ';
-                // var_dump(array_pop(array_reverse($dbSummoner))->summoner_id);
-                // echo '<br>';
-
                 $dbSummonerMatch = new dbSummonerMatch();
                 $dbSummonerMatch->id = -1;
-                $dbSummonerMatch->summoner_id = array_pop(array_reverse($dbSummoner))->summoner_id;
+                $dbSummonerMatch->summoner_id = $dbSummoner->summoner_id;
                 $dbSummonerMatch->champ_pick = $participant->championId;
                 $dbSummonerMatch->champ_ban = $match->teams[$teamId]->bans[$participantId % 5]->championId;
                 $dbSummonerMatch->team_a = $teamId < 1;
                 $dbSummonerMatch->role = $lane;
                 $dbSummonerMatch->match_id = -1;
 
-                // var_dump($dbSummonerMatch);
-
                 array_push($dbSummonerMatches, $dbSummonerMatch);
             } else {
-                echo "Couldn't store and get dbSummoner with name: $participantIdentity->player->summonerName";
+                error_log("Couldn't store and get dbSummoner with name: $summonerName", 0);
+                echo "Couldn't store and get dbSummoner with name: $summonerName";
             }
         }
 
         if (sizeof($dbSummonerMatches) === 10) {
             $dbMatchId = dbStoreMatch($match);
-            // echo '<br>';
-            // echo "dbMatchId: ";
-            // echo '<br>';
-            // var_dump($dbMatchId);
             if ($dbMatchId > 0) {
                 $values = array();
                 foreach ($dbSummonerMatches as &$dbSummonerMatch) {
-                    // var_dump($dbSummonerMatch);
                     $team_a = $dbSummonerMatch->team_a ? "True" : "False";
                     $text = "('$dbSummonerMatch->summoner_id', $dbSummonerMatch->champ_pick, $dbSummonerMatch->champ_ban, '$team_a', '$dbSummonerMatch->role', $match->gameId)";
                     array_push($values, $text);
                 }
                 echo '<br>';
-                // echo implode(';', $queryStrings);
-
-                // $summoner_match_request = mysqli_query($conn, implode(';', $queryStrings));
-                // $match_id = -1;
-                // while ($row = mysqli_fetch_assoc($summoner_match_request)) {
-                //     echo $row;
-                // }
-
                 $queryString = "INSERT INTO summoner_matches(summoner_id, champ_pick, champ_ban, team_a, role, match_id) VALUES " . implode(',', $values);
-
                 echo $queryString;
                 echo '<br>';
 
                 if ($conn->query($queryString) === true) {
+                    error_log("Inserted match with all 10 summonerMatches", 0);
                     echo 'Inserted match with all 10 summonerMatches';
                     echo "<br>";
                 } else {
@@ -639,7 +609,14 @@ function dbStoreSummonerMatch($match)
                 echo "Couldn't store match, won't be storing summonerMatches";
             }
         } else {
+            echo "<br>";
+            echo "<br>";
             echo "Couldn't create all 10 summonerMatches, only got " . sizeof($dbSummonerMatches);
+            echo "<br>";
+            var_dump($dbSummonerMatches);
+            echo "<br>";
+            echo "<br>";
+
         }
 
     } else if (sizeof($dbSummonerMatches) < 10) {
@@ -650,21 +627,3 @@ function dbStoreSummonerMatch($match)
 
     return $dbSummonerMatches;
 }
-
-// $winsAndLosses = getChampionWinsAndLossesForTier('DIAMOND');
-// $champion = getMostInfluentialChampion($winsAndLosses);
-
-// var_dump($winsAndLosses);
-// var_dump($champion);
-
-// $match = dbGetMatches(2939823480);
-// echo "match is " . $match['tier'];
-
-// $matches = dbGetTierMatches('GOLD');
-// echo 'matches are: ' . var_dump($matches);
-
-// $champions = dbGetChampions();
-// var_dump($champions);
-
-// $summoners = dbGetSummoners();
-// var_dump($summoners);
