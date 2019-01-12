@@ -34,7 +34,7 @@ function crawl()
         $count = 0;
         foreach ($rankedGames as &$rankedGame) {
             $count++;
-            if($count > 5) {
+            if($count > 4) {
                 break;
             }
             $matchRequest = makeRequest(matchByMatchIdUrl($rankedGame->gameId));
@@ -49,7 +49,7 @@ function crawl()
                 dbStoreSummonerMatch($match);
                 ob_flush();
                 flush();
-                sleep(6);
+                sleep(8);
             }
         }
     }
