@@ -110,7 +110,7 @@ function getMostInfluentialChampions($championWinsAndLosses, $numberToReturn = 5
     $highestInfluenceChampion = new ChampionStatistics();
     $championInfluences = array();
 
-    foreach ($championWinsAndLosses->champions as &$champion) {
+    foreach ($championWinsAndLosses->champions as $champion) {
         if ($champion->wins + $champion->losses > 0) {
             $winRate = $champion->wins / ($champion->wins + $champion->losses);
             $lossRate = $champion->losses / ($champion->wins + $champion->losses);
