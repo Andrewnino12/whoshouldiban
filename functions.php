@@ -74,7 +74,7 @@ function getChampionWinsAndLossesForTier($tier)
     $championStatistics->champions = dbGetChampions();
 
     $count = 0;
-    foreach ($dbSummonerMatches as &$dbSummonerMatch) {
+    foreach ($dbSummonerMatches as $dbSummonerMatch) {
         $dbMatch = $dbMatches[$dbSummonerMatch->match_id];
 
         if (($dbSummonerMatch->team_a && $dbMatch->team_a_won) || (!$dbSummonerMatch->team_a && !$dbMatch->team_a_won)) {
@@ -84,7 +84,7 @@ function getChampionWinsAndLossesForTier($tier)
         }
 
         if ($dbSummonerMatch->champ_ban > 0) {
-            if (strlen($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned[$dbMatch->match_id]) <= 0) {
+            if (!array_key_exists($dbMatch->match_id, $championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned)) {
                 array_push($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned, $dbMatch->match_id);
             }
         }
@@ -204,7 +204,7 @@ function dbGetSummonerMatchesFromMatchIds($matchIds)
         $summoner_match->role = $row['role'];
         $summoner_match->match_id = $row['match_id'];
 
-        $summoner_matches[$row['match_id']] = $summoner_match;
+        $summoner_matches[$row['id']] = $summoner_match;
     }
     return $summoner_matches;
 }
