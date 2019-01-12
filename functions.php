@@ -1,6 +1,15 @@
 <?php
 include 'config.php';
 
+class ChampionInfluence
+{
+    public $wins = -1;
+    public $losses = -1;
+    public $bans = -1;
+    public $chanceOfLosingTo = 0;
+    public $chanceOfWinningAgainst = 0;
+}
+
 class ChampionWinsLossesAndBans
 {
     public $id = 0;
@@ -96,46 +105,50 @@ function getChampionWinsAndLossesForTier($tier)
 function frontPageCards()
 {
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "GRANDMASTER", "CHALLENGER"];
-
-    foreach ($tiers as &$tier) {
+    $patchVersion = patchVersion();
+    foreach ($tiers as $tier) {
         echo '<div class="col-md-6" style="text-align: center;"><p class="help-block">' . $tier . '</p>';
-        $winsAndLosses = getChampionWinsAndLossesForTier($tier);
-        getMostInfluentialChampions($winsAndLosses);
+        getHighestInfluenceChampions($tier, $patchVersion);
         echo "</div>";
     }
 }
 
-function getMostInfluentialChampions($championWinsAndLosses, $numberToReturn = 5)
+function getHighestInfluenceChampions($tier, $patchVersion)
 {
-    $highestInfluenceChampion = new ChampionStatistics();
-    $championInfluences = array();
+    global $conn;
 
-    foreach ($championWinsAndLosses->champions as $champion) {
-        if ($champion->wins + $champion->losses > 0) {
-            $winRate = $champion->wins / ($champion->wins + $champion->losses);
-            $lossRate = $champion->losses / ($champion->wins + $champion->losses);
-            $pickRateWhenAvailable = ($champion->wins + $champion->losses) / (sizeof($championWinsAndLosses->matches) - sizeof($champion->matchesBanned));
-            $banRate = sizeof($champion->matchesBanned) / sizeof($championWinsAndLosses->matches);
-
-            $chanceOfLosingTo = $pickRateWhenAvailable * $winRate;
-            $chanceOfWinningAgainst = $pickRateWhenAvailable * $lossRate;
-            if ($chanceOfLosingTo > $chanceOfWinningAgainst) {
-                $championInfluences["$champion->id"] = $chanceOfLosingTo;
-            }
+    $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where tier = '$tier' AND game_version = '$patchVersion' ORDER BY chance_of_losing_to DESC");
+    $champ_array = array();
+    $wins = 0;
+    $losses = 0;
+    while ($row = mysqli_fetch_assoc($champion_influence_request)) {
+      $wins += $row['champ_wins'];
+      $losses += $row['champ_losses'];
+        if ($row['chance_of_losing_to'] > $row['chance_of_winning_against']) {
+            $champ = new ChampionInfluence();
+            $champ->wins = $row['champ_wins'];
+            $champ->losses = $row['champ_losses'];
+            $champ->bans = $row['champ_bans'];
+            $champ->chanceOfLosingTo = $row['chance_of_losing_to'];
+            $champ->chanceOfWinningAgainst = $row['chance_of_winning_against'];
+            $champ_array[$row["champ_id"]] = $champ;
         }
     }
+
+    echo "Out of " . $wins /5 . " matches<br>";
+    $dbChampions = dbGetChampions();
+
     $count = 0;
-    echo "Out of " . sizeof($championWinsAndLosses->matches) . " matches<br>";
-    arsort($championInfluences);
-    foreach ($championInfluences as $key => $value) {
-        if ($count >= $numberToReturn) {
-            break;
+    foreach ($champ_array as $key => $value) {
+        if($count > 4) {
+          break;
         }
         $count++;
-        $champion = $championWinsAndLosses->champions[$key];
-        $value = round($value * 100, 2);
-        echo "$champion->name had an influence rate of $value%<br>";
-        echo "With $champion->wins wins, $champion->losses losses, and " . sizeof($champion->matchesBanned) . " matches banned<br>";
+        $champion = $champ_array[$key];
+        $influenceRate = round($champion->chanceOfLosingTo * 100, 2);
+        $name = $dbChampions[$key]->name;
+        echo "$name had an influence rate of $influenceRate%<br>";
+        echo "With $champion->wins wins, $champion->losses losses, and " . $champion->bans . " matches banned<br>";
     }
 }
 
