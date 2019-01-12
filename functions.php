@@ -104,7 +104,7 @@ function getChampionWinsAndLossesForTier($tier)
 
 function frontPageCards()
 {
-    $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "GRANDMASTER", "CHALLENGER"];
+    $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
     $patchVersion = patchVersion();
     foreach ($tiers as $tier) {
         echo '<div class="col-md-6" style="text-align: center;"><p class="help-block">' . $tier . '</p>';
