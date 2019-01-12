@@ -107,7 +107,6 @@ function frontPageCards()
 
 function getMostInfluentialChampions($championWinsAndLosses, $numberToReturn = 5)
 {
-    $highestInfluenceRate = 0;
     $highestInfluenceChampion = new ChampionStatistics();
     $championInfluences = array();
 
@@ -120,7 +119,7 @@ function getMostInfluentialChampions($championWinsAndLosses, $numberToReturn = 5
 
             $chanceOfLosingTo = $pickRateWhenAvailable * $winRate;
             $chanceOfWinningAgainst = $pickRateWhenAvailable * $lossRate;
-            if ($chanceOfLosingTo > $highestInfluenceRate) {
+            if ($chanceOfLosingTo > $chanceOfWinningAgainst) {
                 $championInfluences["$champion->id"] = $chanceOfLosingTo;
             }
         }
