@@ -2,8 +2,18 @@
 include 'config.php';
 include 'functions.php';
 
+ini_set('memory_limit', '16M');
+ignore_user_abort(true);
 set_time_limit(60);
-
+// ignore_user_abort(false);
+ob_start();
+// // do initial processing here
+//echo $response; // send the response
+header('Connection: close');
+header('Content-Length: ' . ob_get_length());
+ob_end_flush();
+ob_flush();
+flush();
 function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVersion)
 {
     global $conn;
@@ -28,7 +38,7 @@ function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVer
         $chanceOfLosingTo = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $winRate : 0;
         $chanceOfWinningAgainst = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $lossRate : 0;
         if ($wins + $losses + $bans >= 0) { // IN DATABASE ALREADY, DO UPDATE
-            $queryString = "UPDATE champ_influences set champ_id = $champion->id, game_version = '$patchVersion', tier = '$tier', champ_wins = $champion->wins, champ_losses = $champion->losses, champ_bans = $matchesBanned, chance_of_losing_to = $chanceOfLosingTo, chance_of_winning_against = $chanceOfWinningAgainst where champ_id = $champion->id AND tier = '$tier' AND patch_version = '$patchVersion'";
+            $queryString = "UPDATE champ_influences set champ_id = $champion->id, game_version = '$patchVersion', tier = '$tier', champ_wins = $champion->wins, champ_losses = $champion->losses, champ_bans = $matchesBanned, chance_of_losing_to = $chanceOfLosingTo, chance_of_winning_against = $chanceOfWinningAgainst where champ_id = $champion->id AND tier = '$tier' AND game_version = '$patchVersion'";
         } else { // NOT IN DATABASE, DO INSERT
             $queryString = "INSERT INTO champ_influences (champ_id, game_version, tier, champ_wins, champ_losses, champ_bans, chance_of_losing_to, chance_of_winning_against) VALUES($champion->id, '$patchVersion', '$tier', $champion->wins, $champion->losses, $matchesBanned, $chanceOfLosingTo, $chanceOfWinningAgainst)";
         }
@@ -63,9 +73,11 @@ function storeMostInfluentialChampions($tier, $patchVersion)
     }
 }
 
-$tier = $_GET['tier'];
-$tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
-if ($tier && in_array($tier, $tiers)) {
-    $patchVersion = patchVersion();
-    storeMostInfluentialChampions($tier, $patchVersion);
+if (isset($_POST['tier'])) {
+    $tier = $_POST['tier'];
+    $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
+    if ($tier && in_array($tier, $tiers)) {
+        $patchVersion = patchVersion();
+        storeMostInfluentialChampions($tier, $patchVersion);
+    }
 }
