@@ -2,7 +2,6 @@
 <html>
     <meta  http-equiv="Content-Type" content="text/html;  charset=iso-8859-1">
     <?php include "header.php"?>
-    <?php include "config.php"?>
     <?php include "functions.php"?>
     <body>
         <!-- <div class="row container-fluid">

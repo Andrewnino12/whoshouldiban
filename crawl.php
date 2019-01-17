@@ -1,5 +1,4 @@
 <?php
-include 'config.php';
 include 'functions.php';
 
 ini_set('memory_limit', '2M');

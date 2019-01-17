@@ -1,8 +1,7 @@
 <?php
-include 'config.php';
 include 'functions.php';
 
-ini_set('memory_limit', '16M');
+ini_set('memory_limit', '20M');
 ignore_user_abort(true);
 set_time_limit(60);
 // ignore_user_abort(false);
