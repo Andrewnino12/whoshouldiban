@@ -53,7 +53,6 @@ function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVer
 
 function storeMostInfluentialChampions($tier, $patchVersion)
 {
-    global $conn;
     $championWinsAndLosses = getChampionWinsAndLossesForTier($tier);
 
     $wins = 0;

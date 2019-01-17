@@ -8,6 +8,8 @@ class ChampionInfluence
     public $bans = -1;
     public $chanceOfLosingTo = 0;
     public $chanceOfWinningAgainst = 0;
+    public $game_version = '';
+    public $tier = '';
 }
 
 class ChampionWinsLossesAndBans
