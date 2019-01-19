@@ -66,7 +66,7 @@ function storeMostInfluentialChampions($tier, $patchVersion)
     $championInfluences = array();
     global $conn;
     foreach ($championWinsAndLosses->champions as $champion) {
-        dbUpdateChampionInfluence($champion, sizeof($championWinsAndLosses->matches), $tier, $patchVersion);
+        dbUpdateChampionInfluence($champion, sizeof($championWinsAndLosses->matches), $tier, $patchVersion, $conn);
     }
     mysqli_close($conn);
 }
