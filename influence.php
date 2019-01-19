@@ -13,10 +13,8 @@ header('Content-Length: ' . ob_get_length());
 ob_end_flush();
 ob_flush();
 flush();
-function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVersion)
+function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVersion, $conn)
 {
-    global $conn;
-
     $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $champion->id AND tier = '$tier' AND game_version = '$patchVersion'");
     $wins = -1;
     $losses = -1;
@@ -66,9 +64,11 @@ function storeMostInfluentialChampions($tier, $patchVersion)
 
     $highestInfluenceChampion = new ChampionStatistics();
     $championInfluences = array();
+    global $conn;
     foreach ($championWinsAndLosses->champions as $champion) {
         dbUpdateChampionInfluence($champion, sizeof($championWinsAndLosses->matches), $tier, $patchVersion);
     }
+    mysqli_close($conn);
 }
 
 if (isset($_POST['tier'])) {

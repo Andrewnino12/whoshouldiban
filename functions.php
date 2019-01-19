@@ -149,7 +149,7 @@ function getHighestInfluenceChampions($tier, $patchVersion)
         $champion = $champ_array[$key];
         $influenceRate = round($champion->chanceOfLosingTo * 100, 2);
         $name = $dbChampions[$key]->name;
-        echo "$name had an influence rate of $influenceRate%<br>";
+        echo "<a href='/champion.php?name=$name'>$name</a> had an influence rate of $influenceRate%<br>";
         echo "With $champion->wins wins, $champion->losses losses, and " . $champion->bans . " matches banned<br>";
     }
 }
@@ -241,6 +241,17 @@ function dbGetChampions($championId = -1)
         $champions[$championWinsLossesAndBans->id] = $championWinsLossesAndBans;
     }
     return $champions;
+}
+
+function dbGetChampionNames($championId = -1)
+{
+    global $conn;
+    $queryString = $championId > 0 ? "SELECT name FROM champions WHERE id = $championId" : "SELECT name FROM champions ORDER BY name";
+
+    $champions_request = mysqli_query($conn, $queryString);
+    while ($row = mysqli_fetch_assoc($champions_request)) {
+        echo $row['name'] . ',';
+    }
 }
 
 function dbGetSummoners($accountId = '', $limit = 1)
