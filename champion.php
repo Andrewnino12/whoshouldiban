@@ -14,7 +14,8 @@
     <div class="row">
             <div class="col-md-12" style="text-align: center;">
                 <?php
-function getChampionStats($champion_name) {
+function getChampionStats($champion_name)
+{
     global $conn;
 
     $champion_request = mysqli_query($conn, "SELECT * FROM champions where name = '$champion_name'");
@@ -22,35 +23,41 @@ function getChampionStats($champion_name) {
     while ($row = mysqli_fetch_assoc($champion_request)) {
         $id = $row['id'];
     }
-    echo "Champion ID is $id";
-    echo "<br>";
 
-    $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $id");
     $champion_influences = array();
-    while ($row = mysqli_fetch_assoc($champion_influence_request)) {
-        $champion_influence = new ChampionInfluence();
-        $champion_influence->wins = $row['champ_wins'];
-        $champion_influence->losses = $row['champ_losses'];
-        $champion_influence->bans = $row['champ_bans'];
-        $champion_influence->game_version = $row['game_version'];
-        $champion_influence->tier = $row['tier'];
-        $champion_influence->chanceOfLosingTo = $row['chance_of_losing_to'];
-        $champion_influence->chanceOfWinningAgainst = $row['chance_of_winning_against'];
-        array_push($champion_influences, $champion_influence);
+    if ($id > -1) {
+        $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $id");
+        while ($row = mysqli_fetch_assoc($champion_influence_request)) {
+            $champion_influence = new ChampionInfluence();
+            $champion_influence->wins = $row['champ_wins'];
+            $champion_influence->losses = $row['champ_losses'];
+            $champion_influence->bans = $row['champ_bans'];
+            $champion_influence->game_version = $row['game_version'];
+            $champion_influence->tier = $row['tier'];
+            $champion_influence->chanceOfLosingTo = $row['chance_of_losing_to'];
+            $champion_influence->chanceOfWinningAgainst = $row['chance_of_winning_against'];
+            array_push($champion_influences, $champion_influence);
+        }
+    } else {
+        echo "CHAMPION DOES NOT EXIST";
     }
-    echo "<br>";
     return $champion_influences;
     mysqli_close($conn);
 }
 
-
 if (isset($_GET['name'])) {
     $champion_name = $_GET['name'];
-    echo "Champion name is $champion_name";
+    echo '<div class="col-md-12" style="text-align: center;">';
+    echo "<b>$champion_name</b>";
     echo "<br>";
-    $champion_influences = getChampionStats($champion_name);
+    echo "<img src='/champ_icons/" . $champion_name . "Square.png' alt='error' />";
+    echo "</div>";
 
+    $champion_influences = getChampionStats($champion_name);
     foreach ($champion_influences as $champion_influence) {
+        echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
+        echo "<img src='/emblems/" . $champion_influence->tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
+        echo '<p class="help-block" style="font-weight:bold">' . $champion_influence->tier . '</p>';
         echo "<br>";
         echo "In $champion_influence->tier for Patch $champion_influence->game_version:";
         echo "<br>";
@@ -62,6 +69,7 @@ if (isset($_GET['name'])) {
         echo "<br>";
         echo "For a total influence rate of $champion_influence->chanceOfLosingTo";
         echo "<br>";
+        echo "</div>";
     }
 } else {
     echo "NOT SET";
@@ -70,6 +78,6 @@ if (isset($_GET['name'])) {
             </div>
         </div>
     <!-- Footer -->
-    <?php include("footer.php") ?>
+    <?php include "footer.php"?>
     </body>
 </html>

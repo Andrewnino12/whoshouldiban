@@ -109,7 +109,9 @@ function frontPageCards()
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
     $patchVersion = patchVersion();
     foreach ($tiers as $tier) {
-        echo '<div class="col-md-6" style="text-align: center;"><p class="help-block">' . $tier . '</p>';
+        echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
+        echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
+        echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
         getHighestInfluenceChampions($tier, $patchVersion);
         echo "</div>";
     }
@@ -124,8 +126,8 @@ function getHighestInfluenceChampions($tier, $patchVersion)
     $wins = 0;
     $losses = 0;
     while ($row = mysqli_fetch_assoc($champion_influence_request)) {
-      $wins += $row['champ_wins'];
-      $losses += $row['champ_losses'];
+        $wins += $row['champ_wins'];
+        $losses += $row['champ_losses'];
         if ($row['chance_of_losing_to'] > $row['chance_of_winning_against']) {
             $champ = new ChampionInfluence();
             $champ->wins = $row['champ_wins'];
@@ -137,19 +139,20 @@ function getHighestInfluenceChampions($tier, $patchVersion)
         }
     }
 
-    echo "Out of " . $wins /5 . " matches<br>";
+    echo "Out of " . $wins / 5 . " matches<br>";
     $dbChampions = dbGetChampions();
 
     $count = 0;
     foreach ($champ_array as $key => $value) {
-        if($count > 4) {
-          break;
+        if ($count > 4) {
+            break;
         }
         $count++;
         $champion = $champ_array[$key];
         $influenceRate = round($champion->chanceOfLosingTo * 100, 2);
         $name = $dbChampions[$key]->name;
-        echo "<a href='/champion.php?name=$name'>$name</a> had an influence rate of $influenceRate%<br>";
+        echo "<img src='/champ_icons/" . $name . "Square.png' alt='error' style='width: 45px; margin:5px'>";
+        echo "<a href='/champion.php?name=$name' style='font-weight: bold'>$name</a> had an influence rate of $influenceRate%<br>";
         echo "With $champion->wins wins, $champion->losses losses, and " . $champion->bans . " matches banned<br>";
     }
 }
@@ -209,8 +212,8 @@ function dbGetSummonerMatchesFromMatchIds($matchIds)
     global $conn;
     $summoner_matches_request = mysqli_query($conn, "SELECT * FROM summoner_matches where match_id in ($joinedIds)");
     $summoner_matches = array();
+    $summoner_match = new dbSummonerMatch();
     while ($row = mysqli_fetch_assoc($summoner_matches_request)) {
-        $summoner_match = new dbSummonerMatch();
         $summoner_match->id = $row['id'];
         $summoner_match->summoner_id = $row['summoner_id'];
         $summoner_match->champ_pick = $row['champ_pick'];
