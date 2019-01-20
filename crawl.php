@@ -1,13 +1,11 @@
 <?php
 include 'functions.php';
 
+// Immediately sends a response to the cron-job
 ini_set('memory_limit', '2M');
 ignore_user_abort(true);
 set_time_limit(60);
-// ignore_user_abort(false);
 ob_start();
-// // do initial processing here
-//echo $response; // send the response
 header('Connection: close');
 header('Content-Length: ' . ob_get_length());
 ob_end_flush();
@@ -17,6 +15,7 @@ function crawl()
 {
     $dbSummoners = dbGetSummoners();
 
+    // Loop through summoners and get their match history
     foreach ($dbSummoners as &$dbSummoner) {
         echo "CRAWLING: $dbSummoner->name";
         echo '<br>';
@@ -33,6 +32,7 @@ function crawl()
         $count = 0;
         foreach ($rankedGames as &$rankedGame) {
             $count++;
+            // Limit to four games because of rate limits
             if($count > 4) {
                 break;
             }
@@ -46,8 +46,10 @@ function crawl()
 
             if ($match->gameId) {
                 dbStoreSummonerMatch($match);
+                // Flush output immediately
                 ob_flush();
                 flush();
+                // Sleep for eight seconds to help with rate limiting
                 sleep(8);
             }
         }

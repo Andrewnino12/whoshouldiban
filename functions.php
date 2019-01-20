@@ -76,24 +76,25 @@ function mapIds($object)
 
 function getChampionWinsAndLossesForTier($tier)
 {
-    $dbMatches = dbGetTierMatches($tier);
-    $matchIds = array_keys($dbMatches);
-    $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($matchIds);
+    $dbMatches = dbGetTierMatches($tier); // Get matches within tier
+    $matchIds = array_keys($dbMatches); // Get matchIds only
+    $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($matchIds); // Get summonerMatches from matchIds
 
     $championStatistics = new ChampionStatistics();
     $championStatistics->matches = $matchIds;
-    $championStatistics->champions = dbGetChampions();
+    $championStatistics->champions = dbGetChampions(); // Initialize list of champions
 
-    $count = 0;
     foreach ($dbSummonerMatches as $dbSummonerMatch) {
         $dbMatch = $dbMatches[$dbSummonerMatch->match_id];
 
+        // Count number of wins and losses for each champ
         if (($dbSummonerMatch->team_a && $dbMatch->team_a_won) || (!$dbSummonerMatch->team_a && !$dbMatch->team_a_won)) {
             $championStatistics->champions[$dbSummonerMatch->champ_pick]->wins++;
         } else {
             $championStatistics->champions[$dbSummonerMatch->champ_pick]->losses++;
         }
 
+        // Keep track of which matches each champ was banned
         if ($dbSummonerMatch->champ_ban > 0) {
             if (!array_key_exists($dbMatch->match_id, $championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned)) {
                 array_push($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned, $dbMatch->match_id);
@@ -106,6 +107,7 @@ function getChampionWinsAndLossesForTier($tier)
 
 function frontPageCards()
 {
+    // Main output for index.php
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
     $patchVersion = patchVersion();
     foreach ($tiers as $tier) {
@@ -128,6 +130,7 @@ function getHighestInfluenceChampions($tier, $patchVersion)
     while ($row = mysqli_fetch_assoc($champion_influence_request)) {
         $wins += $row['champ_wins'];
         $losses += $row['champ_losses'];
+        // Only care about champions with positive win rates
         if ($row['chance_of_losing_to'] > $row['chance_of_winning_against']) {
             $champ = new ChampionInfluence();
             $champ->wins = $row['champ_wins'];
@@ -144,6 +147,7 @@ function getHighestInfluenceChampions($tier, $patchVersion)
 
     $count = 0;
     foreach ($champ_array as $key => $value) {
+        // Only display 5 champions for each tier
         if ($count > 4) {
             break;
         }
@@ -171,6 +175,7 @@ function dbGetMatches($matchId)
 function patchVersion()
 {
     global $conn;
+    // Get most recent patch version
     $patch_request = mysqli_query($conn, "select max(game_version) from matches");
     $patchVersion = "UNKNOWN";
     while ($row = mysqli_fetch_assoc($patch_request)) {
@@ -182,6 +187,7 @@ function patchVersion()
 function dbGetTierMatches($tier)
 {
     global $conn;
+    // Get matches for tier on the most recent patch
     $matches_request = mysqli_query($conn, "SELECT * FROM matches where (tier, game_version) in
     ( select tier, game_version
     from innodb.matches
@@ -230,6 +236,7 @@ function dbGetSummonerMatchesFromMatchIds($matchIds)
 function dbGetChampions($championId = -1)
 {
     global $conn;
+    // Get all champions if $championId isn't specified
     $queryString = $championId > 0 ? "SELECT * FROM champions WHERE id = $championId" : "SELECT * FROM champions ORDER BY name";
 
     $champions_request = mysqli_query($conn, $queryString);
@@ -249,6 +256,7 @@ function dbGetChampions($championId = -1)
 function dbGetChampionNames($championId = -1)
 {
     global $conn;
+    // Get all champions if $championId isn't specified
     $queryString = $championId > 0 ? "SELECT name FROM champions WHERE id = $championId" : "SELECT name FROM champions ORDER BY name";
 
     $champions_request = mysqli_query($conn, $queryString);
@@ -260,6 +268,7 @@ function dbGetChampionNames($championId = -1)
 function dbGetSummoners($accountId = '', $limit = 1)
 {
     global $conn;
+    // Get random summoner if accountId isn't specified
     $queryString = strlen($accountId) > 0 ? "SELECT * FROM summoners WHERE account_id = '$accountId'" : "SELECT * FROM summoners ORDER BY rand() desc limit $limit";
 
     $summoners_request = mysqli_query($conn, $queryString);
@@ -276,6 +285,7 @@ function dbGetSummoners($accountId = '', $limit = 1)
         $summoners[$row['id']] = $summoner;
     }
 
+    // Summoner wasn't found, add them to database
     if (sizeof($summoners) < 1) {
         $summonerRequest = makeRequest(summonerByAccountIdUrl($accountId));
         $summoner = $summonerRequest->body;
@@ -323,7 +333,9 @@ function dbStoreSummoner($summoner)
         $dbSummoner->summoner_id = $row['summoner_id'];
     }
 
+
     if ($dbSummoner->id < 0) {
+        // Add summoner to database and then get the automatically generated id
         $queryString = "INSERT INTO summoners (name, account_id, summoner_level, revision_date, summoner_id, profile_icon_id) VALUES" . getSummonerValuesString($summoner);
         $dbSummoners_request = mysqli_query($conn, $queryString);
         $queryString = "SELECT * FROM summoners WHERE account_id = '$summoner->accountId'";
@@ -411,6 +423,7 @@ function makeRequest($requestUrl)
                 $decodedJSON = json_decode($body);
 
                 if ($httpCode === 429) {
+                    // In theory this shouldn't be hit because crawl rate is slow enough
                     error_log("Retrying after " . $headers['Retry-After'] . " seconds");
                     echo "Retrying after " . $headers['Retry-After'] . " seconds";
                     // sleep(intval($headers['Retry-After']));
@@ -433,11 +446,13 @@ function makeRequest($requestUrl)
 
 function rankedGames($match)
 {
+    // Return true if Ranked Solo (420) or Ranked Flex (440)
     return $match->queue === 420 || $match->queue === 440;
 }
 
 function getRankedGameIdsBySummonerHistory($summonerHistory)
 {
+    // Filter out everything that isn't a ranked game
     return array_filter($summonerHistory->matches, "rankedGames");
 }
 
@@ -466,6 +481,7 @@ function getMatchTier($match)
         $tier = 'UNRANKED';
 
         foreach ($positions as &$position) {
+            // Get user's current ranked position for the given queue
             if (strpos($position->queueType, 'RANKED_FLEX') !== false && $match->queueId === 440
                 || strpos($position->queueType, 'RANKED_SOLO') !== false && $match->queueId === 420) {
                 $tier = $position->tier;
@@ -475,6 +491,7 @@ function getMatchTier($match)
         array_push($tiers, $tier);
     }
 
+    // Get mode of summoner's ranks to guess ELO for match
     $values = array_count_values($tiers);
     $mode = array_search(max($values), $values);
 
@@ -559,6 +576,7 @@ function dbStoreSummonerMatch($match)
 
             $dbSummoner = dbGetSummonerByName($summonerName);
 
+            // Summoner doesn't exist in the database yet
             if ($dbSummoner->id < 0) {
                 $summonerRequest = makeRequest(summonerByNameUrl($summonerName));
 
@@ -573,6 +591,7 @@ function dbStoreSummonerMatch($match)
             if ($dbSummoner->id > 0) {
                 $participant = $match->participants[$participantId];
                 $lane = $participant->timeline->lane;
+                // Determine role
                 switch ($lane) {
                     case 'MID':
                     case 'MIDDLE':
@@ -611,6 +630,7 @@ function dbStoreSummonerMatch($match)
             }
         }
 
+        // Only add match if all 10 summonerMatches can be added as well
         if (sizeof($dbSummonerMatches) === 10) {
             $dbMatchId = dbStoreMatch($match);
             if ($dbMatchId > 0) {
@@ -636,6 +656,7 @@ function dbStoreSummonerMatch($match)
             } else {
                 echo "Couldn't store match, won't be storing summonerMatches";
             }
+            // Not all users could be added to database
         } else {
             echo "<br>";
             echo "<br>";

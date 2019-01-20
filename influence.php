@@ -1,13 +1,12 @@
 <?php
 include 'functions.php';
 
+// Need more memory to process large sets of games
 ini_set('memory_limit', '20M');
+// Immediately sends response to cron-job
 ignore_user_abort(true);
 set_time_limit(60);
-// ignore_user_abort(false);
 ob_start();
-// // do initial processing here
-//echo $response; // send the response
 header('Connection: close');
 header('Content-Length: ' . ob_get_length());
 ob_end_flush();
@@ -27,16 +26,24 @@ function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVer
 
     $matchesBanned = sizeof($champion->matchesBanned);
 
-    if ($champion->wins > $wins || $champion->losses > $losses || $matchesBanned > $bans) { // NEW DATA
+    // New data is different from what's in the database currently
+    if ($champion->wins > $wins || $champion->losses > $losses || $matchesBanned > $bans) {
         $winRate = $champion->wins + $champion->losses > 0 ? $champion->wins / ($champion->wins + $champion->losses) : 0;
         $lossRate = $champion->wins + $champion->losses > 0 ? $champion->losses / ($champion->wins + $champion->losses) : 0;
         $pickRateWhenAvailable = ($champion->wins + $champion->losses) / ($numberOfMatches - $matchesBanned);
 
         $chanceOfLosingTo = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $winRate : 0;
         $chanceOfWinningAgainst = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $lossRate : 0;
-        if ($wins + $losses + $bans >= 0) { // IN DATABASE ALREADY, DO UPDATE
-            $queryString = "UPDATE champ_influences set champ_id = $champion->id, game_version = '$patchVersion', tier = '$tier', champ_wins = $champion->wins, champ_losses = $champion->losses, champ_bans = $matchesBanned, chance_of_losing_to = $chanceOfLosingTo, chance_of_winning_against = $chanceOfWinningAgainst where champ_id = $champion->id AND tier = '$tier' AND game_version = '$patchVersion'";
-        } else { // NOT IN DATABASE, DO INSERT
+        // In database already, do update
+        if ($wins + $losses + $bans >= 0) {
+            // Prevents wild values from being stored
+            if($chanceOfLosingTo <= 1 && $chanceOfWinningAgainst <= 1) {
+                $queryString = "UPDATE champ_influences set champ_id = $champion->id, game_version = '$patchVersion', tier = '$tier', champ_wins = $champion->wins, champ_losses = $champion->losses, champ_bans = $matchesBanned, chance_of_losing_to = $chanceOfLosingTo, chance_of_winning_against = $chanceOfWinningAgainst where champ_id = $champion->id AND tier = '$tier' AND game_version = '$patchVersion'";
+            } else {
+                error_log("CHANCE OF LOSING TO: $chanceOfLosingTo, CHANCE OF WINNING AGAINST: $chanceOfWinningAgainst", 0);
+            }
+        // Not yet in database, do insert
+        } else {
             $queryString = "INSERT INTO champ_influences (champ_id, game_version, tier, champ_wins, champ_losses, champ_bans, chance_of_losing_to, chance_of_winning_against) VALUES($champion->id, '$patchVersion', '$tier', $champion->wins, $champion->losses, $matchesBanned, $chanceOfLosingTo, $chanceOfWinningAgainst)";
         }
 

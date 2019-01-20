@@ -46,6 +46,7 @@ if (isset($_GET['name'])) {
     global $conn;
     $champion_influences = getChampionStats($champion_name, $conn);
     if (sizeof($champion_influences) > 0) {
+        // Get the number of games in each tier
         $games_in_tier_request = mysqli_query($conn, "select tier, SUM(champ_wins) from innodb.champ_influences group by tier");
         $games_in_tier = array();
         while ($row = mysqli_fetch_assoc($games_in_tier_request)) {
@@ -58,6 +59,8 @@ if (isset($_GET['name'])) {
         echo "<br>";
         echo "<img src='/champ_icons/" . $champion_name . "Square.png' alt='error' />";
         echo "</div>";
+
+        // Display tiers in order from lowest to highest
         $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
         foreach ($tiers as $tier) {
             $champion_influence = $champion_influences[$tier];
