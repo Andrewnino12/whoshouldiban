@@ -153,7 +153,7 @@
                 <a class="navbar-brand" href="index.php">Who Should I Ban?</a>
                 <div>
                 <form autocomplete="off" action="/champion.php">
-                    <div class="autocomplete" style="width:300px;">
+                    <div class="autocomplete" style="width:220px;">
                       <input id="myInput" type="text" name="name" placeholder="Champion Name">
                     </div>
                     <input type="submit">
@@ -200,8 +200,11 @@
           /*create a DIV element for each matching element:*/
           b = document.createElement("DIV");
           /*make the matching letters bold:*/
-          b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
-          b.innerHTML += arr[i].substr(val.length);
+          name = arr[i]
+          boldName =  name.substr(0, val.length)
+          restOfName = name.substr(val.length)
+          b.innerHTML = '<img src="/champ_icons/' + name + 'Square.png" alt="error" style="width: 30px; margin-right:5px">' + "<strong>" + boldName + "</strong>";
+          b.innerHTML += restOfName;
           /*insert a input field that will hold the current array item's value:*/
           b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
           /*execute a function when someone clicks on the item value (DIV element):*/
