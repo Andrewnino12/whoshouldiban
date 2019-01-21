@@ -34,24 +34,27 @@ function dbUpdateChampionInfluence($champion, $numberOfMatches, $tier, $patchVer
 
         $chanceOfLosingTo = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $winRate : 0;
         $chanceOfWinningAgainst = $pickRateWhenAvailable > 0 ? $pickRateWhenAvailable * $lossRate : 0;
+        $queryString = '';
         // In database already, do update
         if ($wins + $losses + $bans >= 0) {
             // Prevents wild values from being stored
             if($chanceOfLosingTo <= 1 && $chanceOfWinningAgainst <= 1) {
                 $queryString = "UPDATE champ_influences set champ_id = $champion->id, game_version = '$patchVersion', tier = '$tier', champ_wins = $champion->wins, champ_losses = $champion->losses, champ_bans = $matchesBanned, chance_of_losing_to = $chanceOfLosingTo, chance_of_winning_against = $chanceOfWinningAgainst where champ_id = $champion->id AND tier = '$tier' AND game_version = '$patchVersion'";
             } else {
-                error_log("CHANCE OF LOSING TO: $chanceOfLosingTo, CHANCE OF WINNING AGAINST: $chanceOfWinningAgainst", 0);
+                error_log("CHAMPION ID: $champion->id, TIER: $tier, NUMBER OF WINS: $champion->wins, NUMBER OF LOSSES: $champion->losses, NUMBER OF MATCHES: $numberOfMatches, MATCHES BANNED: $matchesBanned, PICKRATEWHENAVAILABLE: $pickRateWhenAvailable, CHANCE OF LOSING TO: $chanceOfLosingTo, CHANCE OF WINNING AGAINST: $chanceOfWinningAgainst", 0);
             }
         // Not yet in database, do insert
         } else {
             $queryString = "INSERT INTO champ_influences (champ_id, game_version, tier, champ_wins, champ_losses, champ_bans, chance_of_losing_to, chance_of_winning_against) VALUES($champion->id, '$patchVersion', '$tier', $champion->wins, $champion->losses, $matchesBanned, $chanceOfLosingTo, $chanceOfWinningAgainst)";
         }
 
-        if ($conn->query($queryString) === true) {
-            echo $queryString;
-            echo "<br>";
-        } else {
-            echo "Error: " . $queryString . "<br>" . $conn->error;
+        if (strlen($queryString) > 0) {
+            if ($conn->query($queryString) === true) {
+                echo $queryString;
+                echo "<br>";
+            } else {
+                echo "Error: " . $queryString . "<br>" . $conn->error;
+            }
         }
     }
 }

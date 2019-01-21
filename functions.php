@@ -218,8 +218,8 @@ function dbGetSummonerMatchesFromMatchIds($matchIds)
     global $conn;
     $summoner_matches_request = mysqli_query($conn, "SELECT * FROM summoner_matches where match_id in ($joinedIds)");
     $summoner_matches = array();
-    $summoner_match = new dbSummonerMatch();
     while ($row = mysqli_fetch_assoc($summoner_matches_request)) {
+        $summoner_match = new dbSummonerMatch();
         $summoner_match->id = $row['id'];
         $summoner_match->summoner_id = $row['summoner_id'];
         $summoner_match->champ_pick = $row['champ_pick'];
