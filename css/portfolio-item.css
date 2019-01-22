@@ -4,10 +4,6 @@
  * Licensed under MIT (https://github.com/BlackrockDigital/startbootstrap-portfolio-item/blob/master/LICENSE)
  */
 
-body {
-  padding-top: 54px;
-}
-
 .autocomplete {
   /*the container must be positioned relative:*/
   position: relative;
@@ -52,12 +48,6 @@ input[type=submit] {
   /*when navigating through the items using the arrow keys:*/
   background-color: DodgerBlue !important; 
   color: #ffffff; 
-}
-
-@media (min-width: 992px) {
-  body {
-    padding-top: 56px;
-  }
 }
 
 .col-md-6 {

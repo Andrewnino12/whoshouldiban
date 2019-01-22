@@ -1,6 +1,10 @@
 <!DOCTYPE  HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"  "http://www.w3.org/TR/html4/loose.dtd"> 
 <html>
     <head>
+        <!-- Bootstrap core CSS -->
+        <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Custom styles for this template -->
+        <link href="css/portfolio-item.css" rel="stylesheet">
         <meta http-equiv="refresh" content="0;url=/index.php">
         <style type="text/css">
             .border {
@@ -19,14 +23,11 @@
                 color: #fff;
             }
             @media (min-width: 992px) {
-            .col-md-7 {
-                width: 61.666666%;
+                .col-md-7 {
+                    width: 61.666666%;
+                }
             }
-        }
         </style>
-        <h2 class="headerName text-center">
-            Who Should I Ban?
-        </h2>
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
         <!-- Optional theme -->
@@ -39,52 +40,20 @@
         </title> -->
     </head>
     <body>
-        <nav class="navbar navbar-default" style="background-color:red">
-            <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header ">
-                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                    <span class="sr-only">Toggle navigation</span>
-                    <span class="icon-bar"></span>
-                </button>
-                <a class="navbar-brand" href="#">Who Should I Ban?</a>
-            </div>
-            <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav">
-                    <li class="active">
-                        <a href="index.php">Home <span class="sr-only">(current)</span></a>
-                    </li>
-                </ul>
-            </div>
-            <!-- /.navbar-collapse -->
-        </nav>
-        <!-- <h1 class="page-header text-center">
-        Most Influential Champions
-    </h1> -->
-	<!-- <h2 class="page-header text-center">
-        Iron
-    </h2> -->
-    </div>
-    <div class="row container-fluid">
-        <div class="col-md-12 border">
-            <!-- <p class="help-block">
-                Enter the web address of the article
-            </p> -->
-            <!-- <form  method="post" action="web_address.php?go"  id="searchform">
-                <div class="form-group">
-                    <input  type="text" name="name" class="form-control" value="">
-                    <br/>
-                    <input  type="submit" name="submitForm" value="Get Rating" class="btn btn-info">
-					<br>
-                    <br>
-                    Articles are rated from -100 to 100 with -100 being as 
-                        <span style='background-color: rgb(255, 0, 0)'>Conservative</span>
-                        as possible and 100 being as 
-                        <span style='background-color: rgb(0 , 125, 255'>Liberal</span>
-                        as possible
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="index.php">Who Should I Ban?</a>
+                <div>
+                <form autocomplete="off" action="/champion.php">
+                    <div class="autocomplete" style="width:200px;">
+                      <input id="myInput" type="text" name="name" placeholder="Champion Name">
+                    </div>
+                    <input type="submit">
+                </form>
                 </div>
-            </form> -->
-        </div>
-    </div>
-</body> 
-</html> 
+            </div>
+        </nav>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/b/b1/Loading_icon.gif" style="margin: 0px auto; display:table-column" />
+    </body>
+</html>

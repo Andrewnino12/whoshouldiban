@@ -35,93 +35,6 @@
         <meta name="msapplication-TileColor" content="#ffffff">
         <meta name="msapplication-TileImage" content="/icons/ms-icon-144x144.png">
         <meta name="theme-color" content="#ffffff">
-        <style>
-        .modal-image {
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .modal-image:hover {opacity: 0.7;}
-
-        /* The Modal (background) */
-        .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 1; /* Sit on top */
-            padding-top: 100px; /* Location of the box */
-            left: 0;
-            top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgb(0,0,0); /* Fallback color */
-            background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
-        }
-
-        /* Modal Content (image) */
-        .modal-content {
-            margin: auto;
-            display: block;
-            width: 80%;
-            max-width: 700px;
-        }
-
-        /* Caption of Modal Image */
-        #caption {
-            margin: auto;
-            display: block;
-            width: 80%;
-            max-width: 700px;
-            text-align: center;
-            color: #ccc;
-            padding: 10px 0;
-            height: 150px;
-        }
-
-        /* Add Animation */
-        .modal-content, #caption {
-            -webkit-animation-name: zoom;
-            -webkit-animation-duration: 0.6s;
-            animation-name: zoom;
-            animation-duration: 0.6s;
-        }
-
-        @-webkit-keyframes zoom {
-            from {-webkit-transform: scale(0)}
-            to {-webkit-transform: scale(1)}
-        }
-
-        @keyframes zoom {
-            from {transform: scale(0.1)}
-            to {transform: scale(1)}
-        }
-
-        /* The Close Button */
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: #bbb;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        /* 100% Image Width on Smaller Screens */
-        @media only screen and (max-width: 700px){
-            .modal-content {
-                width: 100%;
-            }
-        }
-    </style>
     </head>
 <style type="text/css">
     .border {
@@ -148,20 +61,20 @@
     </head>
     <body>
         <!-- Navigation -->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container">
                 <a class="navbar-brand" href="index.php">Who Should I Ban?</a>
                 <div>
                 <form autocomplete="off" action="/champion.php">
-                    <div class="autocomplete" style="width:220px;">
+                    <div class="autocomplete" style="width:200px;">
                       <input id="myInput" type="text" name="name" placeholder="Champion Name">
                     </div>
                     <input type="submit">
                 </form>
                 </div>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <!-- <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
-                </button>
+                </button> -->
 </div>
 </nav>
 <div id="dom-target" style="display: none;">
@@ -173,9 +86,6 @@
     ?>
 </div>
 <script>
-        // document.querySelector('#search').addEventListener('click', function() {
-        //     document.location.href = '/champion.php?name=' + document.querySelector('#search_input').value;
-        // });
         function autocomplete(inp, arr) {
   /*the autocomplete function takes two arguments,
   the text field element and an array of possible autocompleted values:*/
@@ -281,29 +191,3 @@ var div = document.getElementById("dom-target");
     autocomplete(document.getElementById("myInput"), myData);
 
     </script>
-
-<!-- <nav class="navbar navbar-default">
-    <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <!-- <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">Who Should I Ban?</a>
-        </div>
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <!-- <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav">
-                <li class="active">
-                    <a href="index.php">Home<span class="sr-only">(current)</span></a>
-                </li>
-            </ul>
-        </div> -->
-        <!-- /.navbar-collapse -->
-    <!-- </div> -->
-    <!-- /.container-fluid -->
-<!-- </nav> -->
