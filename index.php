@@ -8,13 +8,19 @@
                 Most Influential Champions
             </h1>
         </div> -->
-	<h2 class="page-header text-center">
-    Most Influential Champions for Patch Version:
-        <?php
-        $patchVersion = patchVersion();
-        echo $patchVersion;
-        ?>
-    </h2>
+        <div class="text-center">
+            <h2 class="page-header">
+            Most Influential Champions for Patch Version:
+            </h2>
+            <select>
+                <?php
+                    $patchVersions = patchVersions();
+                    foreach($patchVersions as $patchVersion) {
+                        echo "<option value='$patchVersion'>$patchVersion</option>";
+                    }
+                ?>
+            </select>
+        </div>
     <div class="row">
             <div class="col-md-12" style="text-align: center;">
                 <?php

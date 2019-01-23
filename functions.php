@@ -109,12 +109,12 @@ function frontPageCards()
 {
     // Main output for index.php
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
-    $patchVersion = patchVersion();
+    $patchVersions = patchVersions();
     foreach ($tiers as $tier) {
         echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
         echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
         echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
-        getHighestInfluenceChampions($tier, $patchVersion);
+        getHighestInfluenceChampions($tier, $patchVersions[0]);
         echo "</div>";
     }
 }
@@ -172,16 +172,16 @@ function dbGetMatches($matchId)
     return $match;
 }
 
-function patchVersion()
+function patchVersions()
 {
     global $conn;
     // Get most recent patch version
-    $patch_request = mysqli_query($conn, "select max(game_version) from matches");
-    $patchVersion = "UNKNOWN";
+    $patch_request = mysqli_query($conn, "select distinct game_version from matches order by game_version desc");
+    $patchVersions = array();
     while ($row = mysqli_fetch_assoc($patch_request)) {
-        $patchVersion = $row['max(game_version)'];
+        array_push($patchVersions, $row['game_version']);
     }
-    return $patchVersion;
+    return $patchVersions;
 }
 
 function dbGetTierMatches($tier)
