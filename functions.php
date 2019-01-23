@@ -119,7 +119,7 @@ function frontPageCards()
     }
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
     foreach ($tiers as $tier) {
-        echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
+        echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px; vertical-align:top">';
         echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
         echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
         getHighestInfluenceChampions($tier, $gameVersion);
@@ -150,7 +150,7 @@ function getHighestInfluenceChampions($tier, $gameVersion)
         }
     }
 
-    echo "Out of " . $wins / 5 . " matches<br>";
+    echo "<i>Out of " . $wins / 5 . " games analyzed:</i><br>";
     $dbChampions = dbGetChampions();
 
     $count = 0;

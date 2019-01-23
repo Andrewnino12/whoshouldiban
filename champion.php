@@ -94,7 +94,7 @@ if (isset($_GET['name'])) {
             echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
             echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
             $games = $games_in_tier[$tier];
-            echo "Out of $games games in Patch $champion_influence->game_version:";
+            echo "<i>Out of $games games analyzed:</i>";
             echo "<br>";
             echo "Won $champion_influence->wins games";
             echo "<br>";
@@ -102,9 +102,11 @@ if (isset($_GET['name'])) {
             echo "<br>";
             echo "And was banned $champion_influence->bans";
             echo "<br>";
-            echo "Chance of losing to: $champion_influence->chanceOfLosingTo";
+            $chanceOfLosingTo = round($champion_influence->chanceOfLosingTo * 100, 2);
+            echo "Chance of losing to in your next game: $chanceOfLosingTo%";
             echo "<br>";
-            echo "Chance of winning against: $champion_influence->chanceOfWinningAgainst";
+            $chanceOfWinningAgainst = round($champion_influence->chanceOfWinningAgainst * 100, 2);
+            echo "Chance of winning against in your next game: $chanceOfWinningAgainst%";
             echo "<br>";
             echo "</div>";
         }
