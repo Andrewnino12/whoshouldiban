@@ -69,61 +69,69 @@ class httpResponse
     public $body = '';
 }
 
+$gameVersions = gameVersions();
+
 function mapIds($object)
 {
     return $object->match_id;
 }
 
-function getChampionWinsAndLossesForTier($tier)
+function getChampionWinsAndLossesForTier($tier, $gameVersion)
 {
-    $dbMatches = dbGetTierMatches($tier); // Get matches within tier
-    $matchIds = array_keys($dbMatches); // Get matchIds only
-    $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($matchIds); // Get summonerMatches from matchIds
+    $dbMatches = dbGetTierMatches($tier, $gameVersion); // Get matches within tier
 
     $championStatistics = new ChampionStatistics();
-    $championStatistics->matches = $matchIds;
-    $championStatistics->champions = dbGetChampions(); // Initialize list of champions
+    if(sizeof($dbMatches) > 0) {
+        $matchIds = array_keys($dbMatches); // Get matchIds only
+        $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds($matchIds); // Get summonerMatches from matchIds
 
-    foreach ($dbSummonerMatches as $dbSummonerMatch) {
-        $dbMatch = $dbMatches[$dbSummonerMatch->match_id];
+        $championStatistics->matches = $matchIds;
+        $championStatistics->champions = dbGetChampions(); // Initialize list of champions
 
-        // Count number of wins and losses for each champ
-        if (($dbSummonerMatch->team_a && $dbMatch->team_a_won) || (!$dbSummonerMatch->team_a && !$dbMatch->team_a_won)) {
-            $championStatistics->champions[$dbSummonerMatch->champ_pick]->wins++;
-        } else {
-            $championStatistics->champions[$dbSummonerMatch->champ_pick]->losses++;
-        }
+        foreach ($dbSummonerMatches as $dbSummonerMatch) {
+            $dbMatch = $dbMatches[$dbSummonerMatch->match_id];
 
-        // Keep track of which matches each champ was banned
-        if ($dbSummonerMatch->champ_ban > 0) {
-            if (!array_key_exists($dbMatch->match_id, $championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned)) {
-                array_push($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned, $dbMatch->match_id);
+            // Count number of wins and losses for each champ
+            if (($dbSummonerMatch->team_a && $dbMatch->team_a_won) || (!$dbSummonerMatch->team_a && !$dbMatch->team_a_won)) {
+                $championStatistics->champions[$dbSummonerMatch->champ_pick]->wins++;
+            } else {
+                $championStatistics->champions[$dbSummonerMatch->champ_pick]->losses++;
+            }
+
+            // Keep track of which matches each champ was banned
+            if ($dbSummonerMatch->champ_ban > 0) {
+                if (!array_key_exists($dbMatch->match_id, $championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned)) {
+                    array_push($championStatistics->champions[$dbSummonerMatch->champ_ban]->matchesBanned, $dbMatch->match_id);
+                }
             }
         }
     }
-
     return $championStatistics;
 }
 
 function frontPageCards()
 {
     // Main output for index.php
+    global $gameVersions;
+    $gameVersion = $gameVersions[0];
+    if(isset($_GET['gameVersion'])) {
+        $gameVersion = $_GET['gameVersion'];
+    }
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
-    $patchVersions = patchVersions();
     foreach ($tiers as $tier) {
         echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
         echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
         echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
-        getHighestInfluenceChampions($tier, $patchVersions[0]);
+        getHighestInfluenceChampions($tier, $gameVersion);
         echo "</div>";
     }
 }
 
-function getHighestInfluenceChampions($tier, $patchVersion)
+function getHighestInfluenceChampions($tier, $gameVersion)
 {
     global $conn;
 
-    $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where tier = '$tier' AND game_version = '$patchVersion' ORDER BY chance_of_losing_to DESC");
+    $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where tier = '$tier' AND game_version = '$gameVersion' ORDER BY chance_of_losing_to DESC");
     $champ_array = array();
     $wins = 0;
     $losses = 0;
@@ -172,27 +180,31 @@ function dbGetMatches($matchId)
     return $match;
 }
 
-function patchVersions()
+function gameVersions()
 {
     global $conn;
     // Get most recent patch version
-    $patch_request = mysqli_query($conn, "select distinct game_version from matches order by game_version desc");
-    $patchVersions = array();
+    $patch_request = mysqli_query($conn, "select distinct game_version from matches");
+    $gameVersions = array();
     while ($row = mysqli_fetch_assoc($patch_request)) {
-        array_push($patchVersions, $row['game_version']);
+        array_push($gameVersions, $row['game_version']);
     }
-    return $patchVersions;
+    natsort($gameVersions);
+    $gameVersions = array_reverse($gameVersions);
+    return $gameVersions;
 }
 
-function dbGetTierMatches($tier)
+function dbGetTierMatches($tier, $gameVersion = '')
 {
     global $conn;
-    // Get matches for tier on the most recent patch
-    $matches_request = mysqli_query($conn, "SELECT * FROM matches where (tier, game_version) in
-    ( select tier, game_version
-    from innodb.matches
-    where tier = '$tier' && game_version in (select max(game_version) from innodb.matches)
-    )");
+
+    if(strlen($gameVersion) <= 0) {
+        global $gameVersions;
+        $gameVersion = $gameVersions[0];
+    }
+
+    $queryString = "SELECT * FROM matches where tier = '$tier' AND game_version = '$gameVersion'";
+    $matches_request = mysqli_query($conn, $queryString);
     $matches = array();
     while ($row = mysqli_fetch_assoc($matches_request)) {
         $dbMatch = new dbMatch();

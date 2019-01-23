@@ -8,13 +8,32 @@
                 Most Influential Champions
             </h1>
         </div> -->
-	<h2 class="page-header text-center">
-        Champion Statistics
-    </h2>
+        <div class="text-center">
+            <h2 class="page-header">
+                Champion Statistics for Patch Version:
+            </h2>
+            <form  id="gameVersionForm">
+                <select id="gameVersionSelect" onchange="this.form.submit()" name="gameVersion">
+                    <?php
+                        foreach($gameVersions as $gameVersion) {
+                            if(isset($_GET['gameVersion']) && $_GET['gameVersion'] == $gameVersion) {
+                                echo "<option selected='selected' value='$gameVersion'>$gameVersion</option>";
+                            } else {
+                                echo "<option value='$gameVersion'>$gameVersion</option>";
+                            }
+                        }
+                    ?>
+                </select>
+                <?php
+                    $championName = $_GET['name'];
+                    echo "<input type='hidden' name='name' value='$championName'/>";
+                ?>
+            </form>
+        </div>
     <div class="row">
             <div class="col-md-12" style="text-align: center;">
                 <?php
-function getChampionStats($champion_name, $conn)
+function getChampionStats($champion_name, $conn, $gameVersion)
 {
     $champion_request = mysqli_query($conn, "SELECT * FROM champions where name = '$champion_name'");
     $id = -1;
@@ -24,7 +43,7 @@ function getChampionStats($champion_name, $conn)
 
     $champion_influences = array();
     if ($id > -1) {
-        $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $id");
+        $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $id AND game_version='$gameVersion'");
         while ($row = mysqli_fetch_assoc($champion_influence_request)) {
             $champion_influence = new ChampionInfluence();
             $champion_influence->wins = $row['champ_wins'];
@@ -43,11 +62,18 @@ function getChampionStats($champion_name, $conn)
 if (isset($_GET['name'])) {
     $champion_name = $_GET['name'];
 
+    if (isset($_GET['gameVersion'])) {
+        $gameVersion = $_GET['gameVersion'];
+    } else {
+        global $gameVersions;
+        $gameVersion = $gameVersions[0];
+    }
+
     global $conn;
-    $champion_influences = getChampionStats($champion_name, $conn);
+    $champion_influences = getChampionStats($champion_name, $conn, $gameVersion);
     if (sizeof($champion_influences) > 0) {
         // Get the number of games in each tier
-        $games_in_tier_request = mysqli_query($conn, "select tier, SUM(champ_wins) from innodb.champ_influences group by tier");
+        $games_in_tier_request = mysqli_query($conn, "select tier, SUM(champ_wins) from innodb.champ_influences where game_version = '$gameVersion' group by tier");
         $games_in_tier = array();
         while ($row = mysqli_fetch_assoc($games_in_tier_request)) {
             $games_in_tier[$row['tier']] = $row['SUM(champ_wins)'] / 5;
@@ -65,8 +91,8 @@ if (isset($_GET['name'])) {
         foreach ($tiers as $tier) {
             $champion_influence = $champion_influences[$tier];
             echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px;">';
-            echo "<img src='/emblems/" . $champion_influence->tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
-            echo '<p class="help-block" style="font-weight:bold">' . $champion_influence->tier . '</p>';
+            echo "<img src='/emblems/" . $tier . "_Emblem.png' alt='error' style='width: 45px; margin:5px'>";
+            echo '<p class="help-block" style="font-weight:bold">' . $tier . '</p>';
             $games = $games_in_tier[$tier];
             echo "Out of $games games in Patch $champion_influence->game_version:";
             echo "<br>";

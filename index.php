@@ -12,14 +12,19 @@
             <h2 class="page-header">
             Most Influential Champions for Patch Version:
             </h2>
-            <select>
-                <?php
-                    $patchVersions = patchVersions();
-                    foreach($patchVersions as $patchVersion) {
-                        echo "<option value='$patchVersion'>$patchVersion</option>";
-                    }
-                ?>
-            </select>
+            <form  id="gameVersionForm">
+                <select id="gameVersionSelect" onchange="this.form.submit()" name="gameVersion">
+                    <?php
+                        foreach($gameVersions as $gameVersion) {
+                            if(isset($_GET['gameVersion']) && $_GET['gameVersion'] == $gameVersion) {
+                                echo "<option selected='selected' value='$gameVersion'>$gameVersion</option>";
+                            } else {
+                                echo "<option value='$gameVersion'>$gameVersion</option>";
+                            }
+                        }
+                    ?>
+                </select>
+            </form>
         </div>
     <div class="row">
             <div class="col-md-12" style="text-align: center;">
