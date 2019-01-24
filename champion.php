@@ -3,11 +3,6 @@
     <meta  http-equiv="Content-Type" content="text/html;  charset=iso-8859-1">
     <?php include "header.php"?>
     <body>
-        <!-- <div class="row container-fluid">
-            <h1 class="page-header text-center">
-                Most Influential Champions
-            </h1>
-        </div> -->
         <div class="text-center">
             <h2 class="page-header">
                 Champion Statistics for Patch Version:
@@ -15,6 +10,7 @@
             <form  id="gameVersionForm">
                 <select id="gameVersionSelect" onchange="this.form.submit()" name="gameVersion">
                     <?php
+                        // Get patch versions dropdown
                         foreach($gameVersions as $gameVersion) {
                             if(isset($_GET['gameVersion']) && $_GET['gameVersion'] == $gameVersion) {
                                 echo "<option selected='selected' value='$gameVersion'>$gameVersion</option>";
@@ -35,7 +31,8 @@
                 <?php
 function getChampionStats($champion_name, $conn, $gameVersion)
 {
-    $champion_request = mysqli_query($conn, "SELECT * FROM champions where name = '$champion_name'");
+    // Get champion id
+    $champion_request = mysqli_query($conn, "SELECT id FROM champions where name = '$champion_name'");
     $id = -1;
     while ($row = mysqli_fetch_assoc($champion_request)) {
         $id = $row['id'];
@@ -43,6 +40,7 @@ function getChampionStats($champion_name, $conn, $gameVersion)
 
     $champion_influences = array();
     if ($id > -1) {
+        // Get champion influences for designated game version
         $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where champ_id = $id AND game_version='$gameVersion'");
         while ($row = mysqli_fetch_assoc($champion_influence_request)) {
             $champion_influence = new ChampionInfluence();
@@ -53,7 +51,7 @@ function getChampionStats($champion_name, $conn, $gameVersion)
             $champion_influence->tier = $row['tier'];
             $champion_influence->chanceOfLosingTo = $row['chance_of_losing_to'];
             $champion_influence->chanceOfWinningAgainst = $row['chance_of_winning_against'];
-            $champion_influences[$row['tier']] = $champion_influence;
+            $champion_influences[$row['tier']] = $champion_influence; // Use tiers as keys
         }
     }
     return $champion_influences;
@@ -66,7 +64,7 @@ if (isset($_GET['name'])) {
         $gameVersion = $_GET['gameVersion'];
     } else {
         global $gameVersions;
-        $gameVersion = $gameVersions[0];
+        $gameVersion = $gameVersions[0]; // Use latest version by default
     }
 
     global $conn;
@@ -76,7 +74,7 @@ if (isset($_GET['name'])) {
         $games_in_tier_request = mysqli_query($conn, "select tier, SUM(champ_wins) from innodb.champ_influences where game_version = '$gameVersion' group by tier");
         $games_in_tier = array();
         while ($row = mysqli_fetch_assoc($games_in_tier_request)) {
-            $games_in_tier[$row['tier']] = $row['SUM(champ_wins)'] / 5;
+            $games_in_tier[$row['tier']] = $row['SUM(champ_wins)'] / 5; // Divide by 5 for each summoner on a team
         }
 
         echo "<br>";

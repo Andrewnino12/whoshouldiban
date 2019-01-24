@@ -13,12 +13,14 @@ ob_flush();
 flush();
 function crawl()
 {
+    // Get random summoner from database
     $dbSummoners = dbGetSummoners();
 
     // Loop through summoners and get their match history
     foreach ($dbSummoners as &$dbSummoner) {
         echo "CRAWLING: $dbSummoner->name";
         echo '<br>';
+        // Get summoner's match history
         $historyRequest = makeRequest(summonerHistoryByAccountIdUrl($dbSummoner->account_id));
 
         if ($historyRequest->httpCode > 400) {
@@ -26,11 +28,11 @@ function crawl()
         }
 
         $summonerHistory = $historyRequest->body;
+        // Filters out games that aren't ranked solo queue or flex queue
         $rankedGames = getRankedGameIdsBySummonerHistory($summonerHistory);
 
-        $rankedGame = current($rankedGames);
         $count = 0;
-        foreach ($rankedGames as &$rankedGame) {
+        foreach ($rankedGames as $rankedGame) {
             $count++;
             // Limit to four games because of rate limits
             if($count > 4) {
@@ -45,6 +47,7 @@ function crawl()
             $match = $matchRequest->body;
 
             if ($match->gameId) {
+                // Got match info, store in database
                 dbStoreSummonerMatch($match);
                 // Flush output immediately
                 ob_flush();

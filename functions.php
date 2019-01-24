@@ -69,12 +69,8 @@ class httpResponse
     public $body = '';
 }
 
+// Globally declare gameVersions
 $gameVersions = gameVersions();
-
-function mapIds($object)
-{
-    return $object->match_id;
-}
 
 function getChampionWinsAndLossesForTier($tier, $gameVersion)
 {
@@ -112,11 +108,14 @@ function getChampionWinsAndLossesForTier($tier, $gameVersion)
 function frontPageCards()
 {
     // Main output for index.php
-    global $gameVersions;
-    $gameVersion = $gameVersions[0];
     if(isset($_GET['gameVersion'])) {
         $gameVersion = $_GET['gameVersion'];
+    } else {
+        global $gameVersions;
+        $gameVersion = $gameVersions[0];
     }
+
+    // List tiers in order
     $tiers = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER"];
     foreach ($tiers as $tier) {
         echo '<div class="col-md-4" style="text-align: center; display: inline-block; margin-bottom: 20px; vertical-align:top">';
@@ -131,6 +130,7 @@ function getHighestInfluenceChampions($tier, $gameVersion)
 {
     global $conn;
 
+    // Get champion influences sorted by the most influential first
     $champion_influence_request = mysqli_query($conn, "SELECT * FROM champ_influences where tier = '$tier' AND game_version = '$gameVersion' ORDER BY chance_of_losing_to DESC");
     $champ_array = array();
     $wins = 0;
@@ -150,6 +150,7 @@ function getHighestInfluenceChampions($tier, $gameVersion)
         }
     }
 
+    // Divide by 5 due to having 5 players on each team
     echo "<i>Out of " . $wins / 5 . " games analyzed:</i><br>";
     $dbChampions = dbGetChampions();
 
@@ -183,12 +184,14 @@ function dbGetMatches($matchId)
 function gameVersions()
 {
     global $conn;
-    // Get most recent patch version
+    // Get all the patch versions that currently have data
     $patch_request = mysqli_query($conn, "select distinct game_version from matches");
     $gameVersions = array();
     while ($row = mysqli_fetch_assoc($patch_request)) {
         array_push($gameVersions, $row['game_version']);
     }
+    // Patches are stored as strings so have to sort them differently
+    // For example, 8.3 would be considered higher than 8.20 if you sorted numerically
     natsort($gameVersions);
     $gameVersions = array_reverse($gameVersions);
     return $gameVersions;
@@ -219,7 +222,7 @@ function dbGetTierMatches($tier, $gameVersion = '')
         $dbMatch->solo_queue = $row['solo_queue'] == 'True';
         $dbMatch->tier = $row['tier'];
 
-        $matches[$row['match_id']] = $dbMatch;
+        $matches[$row['match_id']] = $dbMatch; // Use match_ids as keys
     }
     return $matches;
 }
@@ -240,7 +243,7 @@ function dbGetSummonerMatchesFromMatchIds($matchIds)
         $summoner_match->role = $row['role'];
         $summoner_match->match_id = $row['match_id'];
 
-        $summoner_matches[$row['id']] = $summoner_match;
+        $summoner_matches[$row['id']] = $summoner_match; // Use summoner_match id as the key
     }
     return $summoner_matches;
 }
@@ -297,7 +300,7 @@ function dbGetSummoners($accountId = '', $limit = 1)
         $summoners[$row['id']] = $summoner;
     }
 
-    // Summoner wasn't found, add them to database
+    // Summoner wasn't found, try adding them to the database
     if (sizeof($summoners) < 1) {
         $summonerRequest = makeRequest(summonerByAccountIdUrl($accountId));
         $summoner = $summonerRequest->body;
@@ -347,7 +350,7 @@ function dbStoreSummoner($summoner)
 
 
     if ($dbSummoner->id < 0) {
-        // Add summoner to database and then get the automatically generated id
+        // Summoner isn't already in the databasee, try adding them and then get the automatically generated id
         $queryString = "INSERT INTO summoners (name, account_id, summoner_level, revision_date, summoner_id, profile_icon_id) VALUES" . getSummonerValuesString($summoner);
         $dbSummoners_request = mysqli_query($conn, $queryString);
         $queryString = "SELECT * FROM summoners WHERE account_id = '$summoner->accountId'";
@@ -429,7 +432,7 @@ function makeRequest($requestUrl)
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $headers = get_headers_from_curl_response($response);
                 $body = substr($response, strpos($response, "{"));
-                if (strpos($requestUrl, "positions") !== false) {
+                if (strpos($requestUrl, "positions") !== false) { // Parse tier position request differently
                     $body = substr($response, strpos($response, "["));
                 }
                 $decodedJSON = json_decode($body);
@@ -546,12 +549,12 @@ function dbStoreMatch($match)
         $match_id = $row['id'];
     }
 
-    $matchValuesString = getInsertMatchValuesString($match);
-    $text = "INSERT INTO matches (match_id, season_id, platform_id, game_version, game_creation, game_duration, team_a_won, solo_queue, tier) VALUES$matchValuesString";
-
-    if ($match_id > 0) {
+    if ($match_id > 0) { // Match already exists, do update instead of insert
         $matchValuesString = getUpdateMatchValuesString($match);
         $text = "UPDATE matches set $matchValuesString where match_id = $match_id";
+    } else {
+        $matchValuesString = getInsertMatchValuesString($match);
+        $text = "INSERT INTO matches (match_id, season_id, platform_id, game_version, game_creation, game_duration, team_a_won, solo_queue, tier) VALUES$matchValuesString";
     }
 
     if ($conn->query($text) === true) {
@@ -574,6 +577,7 @@ function dbStoreMatch($match)
 function dbStoreSummonerMatch($match)
 {
     global $conn;
+    // Put gameId in array because dbGetSummonerMatchesFromMatchIds expects an array
     $dbSummonerMatches = dbGetSummonerMatchesFromMatchIds(array($match->gameId));
 
     if (sizeof($dbSummonerMatches) < 1) {

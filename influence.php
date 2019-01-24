@@ -2,7 +2,7 @@
 include 'functions.php';
 
 // Need more memory to process large sets of games
-ini_set('memory_limit', '20M');
+ini_set('memory_limit', '24M');
 // Immediately sends response to cron-job
 ignore_user_abort(true);
 set_time_limit(120);

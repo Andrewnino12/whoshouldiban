@@ -3,11 +3,6 @@
     <meta  http-equiv="Content-Type" content="text/html;  charset=iso-8859-1">
     <?php include "header.php"?>
     <body>
-        <!-- <div class="row container-fluid">
-            <h1 class="page-header text-center">
-                Most Influential Champions
-            </h1>
-        </div> -->
 	<h2 class="page-header text-center">
         Summoner Statistics
     </h2>
