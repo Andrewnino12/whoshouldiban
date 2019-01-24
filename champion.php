@@ -102,11 +102,14 @@ if (isset($_GET['name'])) {
             echo "<br>";
             echo "And was banned $champion_influence->bans";
             echo "<br>";
+            $pickRateWhenAvailable = round(($champion_influence->wins + $champion_influence->losses) / ($games - $champion_influence->bans) * 100, 2);
+            echo "<div class='tooltip2'>Pick rate when not banned: <span class='tooltip2text'>This is the chance they will be picked in your next game</span></div> <b>$pickRateWhenAvailable%</b>";
+            echo "<br>";
             $chanceOfLosingTo = round($champion_influence->chanceOfLosingTo * 100, 2);
-            echo "Chance of losing to in your next game: $chanceOfLosingTo%";
+            echo "<div class='tooltip2'>Chance of losing to in your next game: <span class='tooltip2text'>Pick rate when not banned times their win rate</span></div> <b>$chanceOfLosingTo%</b>";
             echo "<br>";
             $chanceOfWinningAgainst = round($champion_influence->chanceOfWinningAgainst * 100, 2);
-            echo "Chance of winning against in your next game: $chanceOfWinningAgainst%";
+            echo "<div class='tooltip2'>Chance of winning against in your next game: <span class='tooltip2text'>Pick rate when not banned times their loss rate</span></div> <b>$chanceOfWinningAgainst%</b>";
             echo "<br>";
             echo "</div>";
         }

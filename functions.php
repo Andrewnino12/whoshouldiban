@@ -164,8 +164,8 @@ function getHighestInfluenceChampions($tier, $gameVersion)
         $influenceRate = round($champion->chanceOfLosingTo * 100, 2);
         $name = $dbChampions[$key]->name;
         echo "<img src='/champ_icons/" . $name . "Square.png' alt='error' style='width: 45px; margin:5px'>";
-        echo "<a href='/champion.php?name=$name' style='font-weight: bold'>$name</a> had an influence rate of $influenceRate%<br>";
-        echo "With $champion->wins wins, $champion->losses losses, and " . $champion->bans . " matches banned<br>";
+        echo "<a href='/champion.php?name=$name' style='font-weight: bold'>$name</a> had an <div class='tooltip2'>influence rate<span class='tooltip2text'>This is your chance of losing to them in your next game if you don't ban them</span></div> of <b>$influenceRate%</b><br>";
+        echo "With $champion->wins wins, $champion->losses losses, and " . $champion->bans . " games banned<br>";
     }
 }
 
