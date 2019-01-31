@@ -372,7 +372,7 @@ function dbStoreSummoner($summoner)
 function summonerHistoryByAccountIdUrl($accountId)
 {
     $encodedAccountId = rawurlencode($accountId);
-    return "https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/$encodedAccountId";
+    return "https://na1.api.riotgames.com/lol/match/v4/matchlists/by-account/$encodedAccountId?queue=420&queue=440";
 }
 
 function summonerByAccountIdUrl($accountId)
@@ -408,7 +408,7 @@ function get_headers_from_curl_response($response)
 function makeRequest($requestUrl)
 {
     global $api_key;
-    $encodedUrl = $requestUrl . "?api_key=$api_key";
+    $encodedUrl = strpos($requestUrl, 'queue=') > 0 ?  $requestUrl . "&api_key=$api_key" : $requestUrl . "?api_key=$api_key";
 
     $ch = curl_init();
 
